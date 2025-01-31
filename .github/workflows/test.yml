@@ -3,7 +3,7 @@ name: TWRP-5.1-Lollipop-Builder
 on:
   workflow_dispatch:
   push:
-    branches: [twrp-5.1]  # Asegúrate de coincidir con tu rama
+    branches: [twrp-5.1]
 
 env:
   MANIFEST_URL: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni
@@ -13,19 +13,17 @@ env:
 jobs:
   build:
     name: Build TWRP for Android 5.1
-    runs-on: ubuntu-22.04  # Versión actualmente soportada por GitHub
+    runs-on: ubuntu-22.04
     timeout-minutes: 240
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4  # Actualizado a la última versión
 
     - name: Set Up Ubuntu 18.04 Environment (Docker)
-      uses: docker://ubuntu:18.04  # Usamos contenedor para emular Ubuntu 18.04
-      with:
-        args: /bin/bash -c "echo 'Usando entorno Ubuntu 18.04 via Docker'"
+      uses: docker://ubuntu:18.04
 
-    - name: Install Dependencies (Legacy)
+    - name: Install Dependencies
       run: |
         apt-get update -y
         apt-get install -y git-core gnupg flex bison gperf build-essential \
@@ -65,7 +63,8 @@ jobs:
         make -j4 recoveryimage
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Versión actualizada
       with:
         name: twrp-5.1-$DEVICE_NAME
         path: twrp/out/target/product/$DEVICE_NAME/recovery.img
+        retention-days: 3  # Nueva opción disponible en v4
