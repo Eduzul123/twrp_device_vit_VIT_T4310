@@ -31,17 +31,16 @@ jobs:
         sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         sudo sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
 
-        # 2. Añadir claves GPG manualmente (método moderno)
-        sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL http://old-releases.ubuntu.com/ubuntu/archive-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/ubuntu-archive.gpg
+        # 2. Añadir claves GPG manualmente
+        sudo mkdir -p /etc/apt/trusted.gpg.d
+        sudo gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32
+        sudo gpg --export --armor 40976EAF437D05B5 3B4FE6ACC0B21F32 | sudo tee /etc/apt/trusted.gpg.d/ubuntu-archive.gpg >/dev/null
 
         # 3. Actualizar repositorios
         sudo apt-get update -y
 
-        # 4. Instalar OpenJDK7 desde paquete descargado
-        wget http://security.ubuntu.com/ubuntu/pool/universe/o/openjdk-7/openjdk-7-jdk_7u181-2.6.14-1~deb8u1_amd64.deb
-        sudo dpkg -i openjdk-7-jdk_7u181-2.6.14-1~deb8u1_amd64.deb || true
-        sudo apt-get install -f -y
+        # 4. Instalar OpenJDK7 desde repositorios
+        sudo apt-get install -y openjdk-7-jdk
 
         # 5. Instalar otras dependencias
         sudo apt-get install -y \
