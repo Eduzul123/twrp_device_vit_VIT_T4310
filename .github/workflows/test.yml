@@ -18,19 +18,23 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4  # Actualizado a la última versión
+      uses: actions/checkout@v4
 
     - name: Set Up Ubuntu 18.04 Environment (Docker)
       uses: docker://ubuntu:18.04
 
-    - name: Install Dependencies
+    - name: Install Dependencies (Fixed Permissions)
       run: |
-        apt-get update -y
-        apt-get install -y git-core gnupg flex bison gperf build-essential \
+        sudo apt-get update -y  # Añadido sudo
+        sudo apt-get install -y \
+          git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
           lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev ccache \
           libgl1-mesa-dev libxml2-utils xsltproc unzip python2.7 openjdk-7-jdk \
           repo
+
+        # Limpieza del caché de APT
+        sudo rm -rf /var/lib/apt/lists/*
 
     - name: Initialize Repo
       run: |
@@ -63,8 +67,7 @@ jobs:
         make -j4 recoveryimage
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4  # Versión actualizada
+      uses: actions/upload-artifact@v4
       with:
         name: twrp-5.1-$DEVICE_NAME
         path: twrp/out/target/product/$DEVICE_NAME/recovery.img
-        retention-days: 3  # Nueva opción disponible en v4
