@@ -25,26 +25,23 @@ jobs:
       with:
         options: --privileged
 
-    - name: Fix Xenial Repositories
+    - name: Install OpenJDK7 Manually
       run: |
-        # 1. Reemplazar repositorios por mirror confiable
-        sudo sed -i 's/old-releases.ubuntu.com/ports.ubuntu.com/g' /etc/apt/sources.list
-        sudo sed -i 's/xenial main/xenial main universe multiverse restricted/g' /etc/apt/sources.list
-        echo "deb http://archive.ubuntu.com/ubuntu xenial universe" | sudo tee -a /etc/apt/sources.list
+        # 1. Descargar paquete .deb desde mirror confiable
+        wget http://mirrors.kernel.org/ubuntu/pool/universe/o/openjdk-7/openjdk-7-jdk_7u211-2.6.17-0ubuntu0.1_amd64.deb
 
-        # 2. Añadir claves GPG manualmente
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32
+        # 2. Instalar con dpkg y corregir dependencias
+        sudo dpkg -i openjdk-7-jdk_7u211-2.6.17-0ubuntu0.1_amd64.deb || true
+        sudo apt-get update -y
+        sudo apt-get install -f -y
 
-        # 3. Actualizar repositorios
-        sudo rm -rf /var/lib/apt/lists/*
+    - name: Install Dependencies
+      run: |
+        # 1. Actualizar repositorios
+        sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         sudo apt-get update -y
 
-    - name: Install OpenJDK7 and Dependencies
-      run: |
-        # 1. Instalar OpenJDK 7
-        sudo apt-get install -y openjdk-7-jdk
-
-        # 2. Instalar dependencias
+        # 2. Instalar paquetes necesarios
         sudo apt-get install -y \
           git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
