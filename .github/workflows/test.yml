@@ -25,32 +25,34 @@ jobs:
       with:
         options: --privileged
 
-    - name: Fix Repositories and Install JDK7
+    - name: Configure Repositories and Keys
       run: |
-        # 1. Reemplazar repositorios por old-releases
+        # 1. Reemplazar repositorios por Xenial (16.04) legacy
         sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         sudo sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+        echo "deb http://old-releases.ubuntu.com/ubuntu xenial universe" | sudo tee -a /etc/apt/sources.list
 
-        # 2. Añadir claves GPG manualmente
+        # 2. Añadir claves GPG en formato correcto (.gpg)
         sudo mkdir -p /etc/apt/trusted.gpg.d
-        sudo gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32
-        sudo gpg --export --armor 40976EAF437D05B5 3B4FE6ACC0B21F32 | sudo tee /etc/apt/trusted.gpg.d/ubuntu-archive.gpg >/dev/null
+        sudo gpg --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32
+        sudo gpg --export 40976EAF437D05B5 | sudo tee /etc/apt/trusted.gpg.d/ubuntu-archive.gpg >/dev/null
+        sudo gpg --export 3B4FE6ACC0B21F32 | sudo tee -a /etc/apt/trusted.gpg.d/ubuntu-archive.gpg >/dev/null
 
-        # 3. Actualizar repositorios
+        # 3. Forzar actualización limpia
+        sudo rm -rf /var/lib/apt/lists/*
         sudo apt-get update -y
 
-        # 4. Instalar OpenJDK7 desde repositorios
+    - name: Install OpenJDK 7 and Dependencies
+      run: |
+        # 1. Instalar OpenJDK 7 desde repositorio universe
         sudo apt-get install -y openjdk-7-jdk
 
-        # 5. Instalar otras dependencias
+        # 2. Instalar dependencias restantes
         sudo apt-get install -y \
           git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
           lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev ccache \
           libgl1-mesa-dev libxml2-utils xsltproc unzip python2.7 repo
-
-        # 6. Limpiar caché
-        sudo rm -rf /var/lib/apt/lists/*
 
     - name: Initialize Repo
       run: |
