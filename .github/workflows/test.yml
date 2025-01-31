@@ -3,7 +3,7 @@ name: TWRP Recovery Builder
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ twrp-5.1 ]
   pull_request:
 
 env:
