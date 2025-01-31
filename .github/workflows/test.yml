@@ -21,21 +21,23 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set Up Ubuntu 16.04 Environment (Docker)
-      uses: docker://ubuntu:16.04  # Ubuntu 16.04 tiene OpenJDK 7 en repositorios oficiales
+      uses: docker://ubuntu:16.04
       with:
-        options: --privileged  # Permisos para instalar paquetes
+        options: --privileged
 
-    - name: Install Dependencies
+    - name: Fix GPG Keys and Install Dependencies
       run: |
-        # Actualizar repositorios e instalar OpenJDK 7
-        sudo apt-get update -y
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu xenial main universe" -y
-        sudo apt-get update -y
-        sudo apt-get install -y openjdk-7-jdk  # Ahora sí está disponible
+        # Añadir claves GPG faltantes
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 3B4FE6ACC0B21F32
 
-        # Instalar otras dependencias
+        # Actualizar repositorios
+        sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+        sudo sed -i 's/security.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
+        sudo apt-get update -y
+
+        # Instalar OpenJDK 7 y dependencias
         sudo apt-get install -y \
+          openjdk-7-jdk \
           git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
           lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev ccache \
