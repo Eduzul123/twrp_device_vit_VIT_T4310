@@ -27,39 +27,38 @@ jobs:
 
     - name: Install JDK7 and Fix Tools.jar
       run: |
-        # 1. Instalar Python 2
+        # 1. Forzar Python 2 como predeterminado
         sudo apt-get update -y
         sudo apt-get install -y python2
         sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-        # 2. Descargar e instalar JDK7
+        # 2. Instalar JDK7 y crear enlaces críticos
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
-
-        # 3. Configurar enlaces críticos
         sudo ln -sf /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
         sudo ln -sf /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
 
-        # 4. Forzar variables de entorno globales
+        # 3. Configurar variables globales
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
         echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/environment
         source /etc/environment
 
-    - name: Install Dependencies
-      run: |
-        sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
-        sudo apt-get update -y
-        sudo apt-get install -y \
-          git-core gnupg flex bison gperf build-essential \
-          zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
-          lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev ccache \
-          libgl1-mesa-dev libxml2-utils xsltproc unzip repo
+        # 4. Verificación explícita
+        echo "---- Herramientas críticas ----"
+        ls -l /usr/lib/tools.jar
+        java -version
+        python --version
 
-    - name: Initialize Repo
+    - name: Clean Build Environment
+      run: |
+        rm -rf twrp  # Limpiar residuos de builds anteriores
+
+    - name: Initialize Repo with Verbose
       run: |
         mkdir -p twrp && cd twrp
         repo init -u $MANIFEST_URL -b $MANIFEST_BRANCH --depth=1
+        repo sync -j4 --force-sync --no-clone-bundle --verbose
 
     - name: Add Device Tree
       run: |
@@ -75,20 +74,22 @@ jobs:
             revision="twrp-5.1" />
         </manifest>
         EOF
-        repo sync -j4 --force-sync --no-clone-bundle
+        repo sync -j4 --force-sync --no-clone-bundle --verbose
 
     - name: Build Recovery
       run: |
         cd twrp
         export USE_CCACHE=1
         export LC_ALL=C
-        export JAVA_HOME=/usr/lib/jvm/java-7-oracle  # Forzar en el entorno de compilación
+        export JAVA_HOME=/usr/lib/jvm/java-7-oracle  # Redundancia para seguridad
         source build/envsetup.sh
         lunch omni_$DEVICE_NAME-eng
-        make -j4 recoveryimage
+        make -j4 recoveryimage 2>&1 | tee build.log  # Capturar log detallado
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: twrp-5.1-$DEVICE_NAME
-        path: twrp/out/target/product/$DEVICE_NAME/recovery.img
+        path: |
+          twrp/out/target/product/$DEVICE_NAME/recovery.img
+          twrp/build.log  # Incluir log para diagnóstico
