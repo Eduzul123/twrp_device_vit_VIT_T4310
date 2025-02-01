@@ -25,23 +25,23 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install OpenJDK7 Manually
+    - name: Install OpenJDK7 from Trusted Source
       run: |
-        # 1. Descargar paquete desde mirror alternativo (USTC)
-        wget http://mirrors.ustc.edu.cn/ubuntu-archive/pool/universe/o/openjdk-7/openjdk-7-jdk_7u211-2.6.17-0ubuntu0.1_amd64.deb -O openjdk-7.deb
+        # Descargar desde el repositorio de Debian (paquete compatible)
+        wget https://ftp.debian.org/debian/pool/main/o/openjdk-7/openjdk-7-jdk_7u181-2.6.14-1~deb8u1_amd64.deb -O openjdk-7.deb
 
-        # 2. Instalar y corregir dependencias
+        # Instalar y corregir dependencias
         sudo dpkg -i openjdk-7.deb || true
         sudo apt-get update -y
         sudo apt-get install -f -y
 
     - name: Install Dependencies
       run: |
-        # 1. Configurar repositorios legacy
+        # Configurar repositorios legacy
         sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         echo "deb http://security.ubuntu.com/ubuntu xenial-security main" | sudo tee -a /etc/apt/sources.list
 
-        # 2. Actualizar e instalar paquetes
+        # Actualizar e instalar paquetes
         sudo apt-get update -y
         sudo apt-get install -y \
           git-core gnupg flex bison gperf build-essential \
