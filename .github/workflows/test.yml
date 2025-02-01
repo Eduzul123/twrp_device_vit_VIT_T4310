@@ -25,17 +25,17 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install JDK7 from Archive Mirror
+    - name: Install JDK7 from Trusted Mirror
       run: |
-        # Descargar desde mirror archivado de RedHat
-        wget https://archive-redhat.org/software/java/jdk/7u80/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
+        # Descargar desde mirror de la Universidad de Princeton
+        wget https://mirror.math.princeton.edu/pub/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
 
         # Instalar JDK7
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
         sudo ln -s /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
 
-        # Configurar variables de entorno
+        # Configurar entorno
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/profile.d/java.sh
         echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/profile.d/java.sh
         source /etc/profile.d/java.sh
