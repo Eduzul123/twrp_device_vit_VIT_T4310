@@ -25,24 +25,27 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install OpenJDK7 from Trusted Source
+    - name: Install Oracle JDK7
       run: |
-        # Descargar desde el repositorio de Debian (paquete compatible)
-        wget https://ftp.debian.org/debian/pool/main/o/openjdk-7/openjdk-7-jdk_7u181-2.6.14-1~deb8u1_amd64.deb -O openjdk-7.deb
+        # Descargar Oracle JDK 7 desde mirror confiable
+        wget https://github.com/AdoptOpenJDK/openjdk7-binaries/releases/download/jdk7u80-b15/OpenJDK7U-jdk_x64_linux_hotspot_7u80b15.tar.gz -O jdk7.tar.gz
+        
+        # Instalar en /usr/lib/jvm
+        sudo mkdir -p /usr/lib/jvm
+        sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
+        sudo ln -s /usr/lib/jvm/jdk7u80-b15 /usr/lib/jvm/java-7-oracle
 
-        # Instalar y corregir dependencias
-        sudo dpkg -i openjdk-7.deb || true
-        sudo apt-get update -y
-        sudo apt-get install -f -y
+        # Configurar alternativas
+        sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/java-7-oracle/bin/java" 1
+        sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/java-7-oracle/bin/javac" 1
 
     - name: Install Dependencies
       run: |
         # Configurar repositorios legacy
         sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
-        echo "deb http://security.ubuntu.com/ubuntu xenial-security main" | sudo tee -a /etc/apt/sources.list
-
-        # Actualizar e instalar paquetes
         sudo apt-get update -y
+
+        # Instalar dependencias
         sudo apt-get install -y \
           git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
