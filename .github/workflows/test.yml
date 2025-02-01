@@ -25,55 +25,37 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install JDK7 and Fix Tools.jar
+    - name: Install Repo Tool and Dependencies
       run: |
-        # 1. Forzar Python 2 como predeterminado
+        # 1. Instalar Python 2 y dependencias base
         sudo apt-get update -y
-        sudo apt-get install -y python2
+        sudo apt-get install -y python2 git-core curl gnupg
         sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-        # 2. Instalar JDK7 y crear enlaces críticos
+        # 2. Instalar repo manualmente
+        sudo mkdir -p /usr/local/bin
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
+        sudo chmod a+x /usr/local/bin/repo
+        echo 'export PATH=/usr/local/bin:$PATH' | sudo tee -a /etc/environment
+        source /etc/environment
+
+        # 3. Instalar JDK7 y fix tools.jar
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
         sudo ln -sf /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
         sudo ln -sf /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
-
-        # 3. Configurar variables globales
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
-        echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/environment
         source /etc/environment
 
-        # 4. Verificación explícita
-        echo "---- Herramientas críticas ----"
-        ls -l /usr/lib/tools.jar
-        java -version
-        python --version
-
-    - name: Clean Build Environment
-      run: |
-        rm -rf twrp  # Limpiar residuos de builds anteriores
-
-    - name: Initialize Repo with Verbose
+    - name: Initialize Repo
       run: |
         mkdir -p twrp && cd twrp
         repo init -u $MANIFEST_URL -b $MANIFEST_BRANCH --depth=1
-        repo sync -j4 --force-sync --no-clone-bundle --verbose
 
-    - name: Add Device Tree
+    - name: Sync Repositories
       run: |
         cd twrp
-        mkdir -p .repo/local_manifests
-        cat > .repo/local_manifests/device.xml << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <manifest>
-          <project 
-            path="device/vit/VIT_T4310" 
-            name="Eduzul123/twrp_device_vit_VIT_T4310" 
-            remote="github" 
-            revision="twrp-5.1" />
-        </manifest>
-        EOF
         repo sync -j4 --force-sync --no-clone-bundle --verbose
 
     - name: Build Recovery
@@ -81,15 +63,12 @@ jobs:
         cd twrp
         export USE_CCACHE=1
         export LC_ALL=C
-        export JAVA_HOME=/usr/lib/jvm/java-7-oracle  # Redundancia para seguridad
         source build/envsetup.sh
         lunch omni_$DEVICE_NAME-eng
-        make -j4 recoveryimage 2>&1 | tee build.log  # Capturar log detallado
+        make -j4 recoveryimage
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: twrp-5.1-$DEVICE_NAME
-        path: |
-          twrp/out/target/product/$DEVICE_NAME/recovery.img
-          twrp/build.log  # Incluir log para diagnóstico
+        path: twrp/out/target/product/$DEVICE_NAME/recovery.img
