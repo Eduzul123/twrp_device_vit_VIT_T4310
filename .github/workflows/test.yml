@@ -25,36 +25,31 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install JDK7 and Fix Python 2
+    - name: Install JDK7 and Fix Tools.jar
       run: |
-        # 1. Instalar Python 2 explícitamente
+        # 1. Instalar Python 2
         sudo apt-get update -y
         sudo apt-get install -y python2
-
-        # 2. Crear enlace simbólico para python -> python2
         sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-        # 3. Descargar e instalar JDK7
+        # 2. Descargar e instalar JDK7
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
-        sudo ln -s /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
 
-        # 4. Crear enlace simbólico para tools.jar (crítico)
-        sudo ln -s /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
+        # 3. Configurar enlaces críticos
+        sudo ln -sf /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
+        sudo ln -sf /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
 
-        # 5. Configurar variables de entorno
-        echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/profile.d/java.sh
-        echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/profile.d/java.sh
-        source /etc/profile.d/java.sh
+        # 4. Forzar variables de entorno globales
+        echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
+        echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/environment
+        source /etc/environment
 
     - name: Install Dependencies
       run: |
-        # Configurar repositorios legacy
         sudo sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list
         sudo apt-get update -y
-
-        # Instalar dependencias
         sudo apt-get install -y \
           git-core gnupg flex bison gperf build-essential \
           zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
@@ -87,6 +82,7 @@ jobs:
         cd twrp
         export USE_CCACHE=1
         export LC_ALL=C
+        export JAVA_HOME=/usr/lib/jvm/java-7-oracle  # Forzar en el entorno de compilación
         source build/envsetup.sh
         lunch omni_$DEVICE_NAME-eng
         make -j4 recoveryimage
