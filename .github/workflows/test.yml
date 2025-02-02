@@ -32,8 +32,6 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y python2 git-core curl gnupg
         sudo ln -sf /usr/bin/python2 /usr/bin/python
-
-# 3. Instalar JDK7 y fix tools.jar
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
