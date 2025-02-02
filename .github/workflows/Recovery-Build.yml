@@ -37,10 +37,9 @@ jobs:
 
     - name: Instalar repo
       run: |
-        mkdir -p ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-        chmod a+x ~/bin/repo
-        export PATH=~/bin:$PATH
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/repo
+        chmod +x ~/repo
+        sudo mv ~/repo /usr/local/bin/repo
 
     - name: Inicializar y sincronizar fuentes de TWRP
       run: |
