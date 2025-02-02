@@ -46,7 +46,7 @@ jobs:
         mkdir -p ~/twrp
         cd ~/twrp
         repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-5.1
-        repo sync -j$(nproc --all)
+        repo sync -j$(nproc --all) --force-sync
 
     - name: Configurar entorno de compilación
       run: |
@@ -65,3 +65,10 @@ jobs:
       with:
         name: recovery.img
         path: ~/twrp/out/target/product/VIT_T4310/recovery.img
+
+    - name: Limpiar archivos temporales y caché
+      run: |
+        sudo rm -rf ~/twrp
+        sudo apt-get clean
+        sudo rm -rf /var/lib/apt/lists/*
+        sudo rm -rf /tmp/*
