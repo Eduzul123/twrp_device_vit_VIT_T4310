@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Check Out
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Build Environment
       run: |
@@ -71,7 +71,7 @@ jobs:
         make recoveryimage -j$(nproc --all)
 
     - name: Upload Recovery Image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: recovery-image
         path: ~/android_build/workspace/out/target/product/VIT_T4310/recovery.img
