@@ -28,23 +28,31 @@ jobs:
 
     - name: Install Dependencies and JDK7
       run: |
-        # 1. Herramientas base
+        # 1. Herramientas base y Python 2
         sudo apt-get update -y
         sudo apt-get install -y python2 git-core curl gnupg
         sudo ln -sf /usr/bin/python2 /usr/bin/python
 
         # 2. Instalar repo
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo curl -s https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
         sudo chmod a+x /usr/local/bin/repo
 
-        # 3. Instalar JDK7 y corregir tools.jar
+        # 3. Instalar JDK7 con mirror alternativo (corregido)
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
-        sudo ln -sf /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
-        sudo ln -sf /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
+        sudo ln -sfn /usr/lib/jvm/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
+
+        # 4. Fix crítico para tools.jar
+        sudo cp /usr/lib/jvm/java-7-oracle/lib/tools.jar /usr/lib/tools.jar
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
+        echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/environment
         source /etc/environment
+
+        # 5. Verificación explícita
+        echo "=== Verificación JDK7 ==="
+        ls -l /usr/lib/tools.jar
+        java -version
 
     - name: Initialize Repo
       run: |
@@ -75,12 +83,15 @@ jobs:
         cd twrp
         export USE_CCACHE=1
         export LC_ALL=C
+        export JAVA_HOME=/usr/lib/jvm/java-7-oracle  # Forzar variable
         source build/envsetup.sh
         lunch omni_$DEVICE_NAME-eng
-        make -j4 recoveryimage
+        make -j4 recoveryimage 2>&1 | tee build.log
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: twrp-$DEVICE_NAME
-        path: twrp/out/target/product/$DEVICE_NAME/recovery.img
+        path: |
+          twrp/out/target/product/$DEVICE_NAME/recovery.img
+          twrp/build.log
