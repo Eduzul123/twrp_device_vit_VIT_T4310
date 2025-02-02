@@ -8,6 +8,7 @@ on:
 env:
   MANIFEST_URL: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni
   MANIFEST_BRANCH: twrp-5.1
+  DEVICE_TREE_URL: https://github.com/Eduzul123/twrp_device_vit_VIT_T4310
   DEVICE_NAME: VIT_T4310
 
 jobs:
@@ -25,21 +26,14 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install Repo Tool and Dependencies
+    - name: Install Dependencies
       run: |
-        # 1. Instalar Python 2 y dependencias base
+        # Instalar herramientas básicas
         sudo apt-get update -y
         sudo apt-get install -y python2 git-core curl gnupg
         sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-        # 2. Instalar repo manualmente
-        sudo mkdir -p /usr/local/bin
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
-        sudo chmod a+x /usr/local/bin/repo
-        echo 'export PATH=/usr/local/bin:$PATH' | sudo tee -a /etc/environment
-        source /etc/environment
-
-        # 3. Instalar JDK7 y fix tools.jar
+# 3. Instalar JDK7 y fix tools.jar
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
@@ -48,10 +42,28 @@ jobs:
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
         source /etc/environment
 
+        # Instalar repo
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo chmod a+x /usr/local/bin/repo
+
     - name: Initialize Repo
       run: |
         mkdir -p twrp && cd twrp
         repo init -u $MANIFEST_URL -b $MANIFEST_BRANCH --depth=1
+
+    - name: Add Device Tree via Local Manifest
+      run: |
+        mkdir -p twrp/.repo/local_manifests
+        cat > twrp/.repo/local_manifests/device.xml << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <manifest>
+          <project 
+            name="Eduzul123/twrp_device_vit_VIT_T4310" 
+            path="device/vit/VIT_T4310" 
+            remote="github" 
+            revision="twrp-5.1" />
+        </manifest>
+        EOF
 
     - name: Sync Repositories
       run: |
@@ -64,11 +76,11 @@ jobs:
         export USE_CCACHE=1
         export LC_ALL=C
         source build/envsetup.sh
-        lunch omni_$DEVICE_NAME.mk-eng
+        lunch omni_$DEVICE_NAME-eng
         make -j4 recoveryimage
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: twrp-5.1-$DEVICE_NAME
+        name: twrp-$DEVICE_NAME
         path: twrp/out/target/product/$DEVICE_NAME/recovery.img
