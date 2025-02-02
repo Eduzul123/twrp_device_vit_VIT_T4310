@@ -26,12 +26,18 @@ jobs:
       with:
         options: --privileged
 
-    - name: Install Dependencies
+    - name: Install Dependencies and JDK7
       run: |
-        # Instalar herramientas básicas
+        # 1. Herramientas base
         sudo apt-get update -y
         sudo apt-get install -y python2 git-core curl gnupg
         sudo ln -sf /usr/bin/python2 /usr/bin/python
+
+        # 2. Instalar repo
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo chmod a+x /usr/local/bin/repo
+
+        # 3. Instalar JDK7 y corregir tools.jar
         wget https://repo.huaweicloud.com/java/jdk/7u80-b15/jdk-7u80-linux-x64.tar.gz -O jdk7.tar.gz
         sudo mkdir -p /usr/lib/jvm
         sudo tar -xzf jdk7.tar.gz -C /usr/lib/jvm
@@ -40,16 +46,12 @@ jobs:
         echo 'export JAVA_HOME=/usr/lib/jvm/java-7-oracle' | sudo tee -a /etc/environment
         source /etc/environment
 
-        # Instalar repo
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
-        sudo chmod a+x /usr/local/bin/repo
-
     - name: Initialize Repo
       run: |
         mkdir -p twrp && cd twrp
         repo init -u $MANIFEST_URL -b $MANIFEST_BRANCH --depth=1
 
-    - name: Add Device Tree via Local Manifest
+    - name: Add Device Tree
       run: |
         mkdir -p twrp/.repo/local_manifests
         cat > twrp/.repo/local_manifests/device.xml << EOF
