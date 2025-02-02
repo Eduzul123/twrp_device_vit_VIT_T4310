@@ -1,94 +1,40 @@
-name: TWRP Recovery Builder 2024 for VIT_T4310
+name: TWRP Recovery Builder 2024 for VIT_T4310 (Android 5.1)
 
 on:
   workflow_dispatch:
-    inputs:
-      MANIFEST_BRANCH:
-        description: 'TWRP Minimal-Manifest Branch'
-        required: true
-        default: 'twrp-5.1'
-        type: choice
-        options:
-        - twrp-5.1
-      DEVICE_TREE:
-        description: 'Custom Recovery Tree' 
-        required: true
-        default: 'https://github.com/Eduzul123/twrp_device_vit_VIT_T4310'
-      DEVICE_TREE_BRANCH:
-        description: 'Custom Recovery Tree Branch' 
-        required: true
-        default: 'twrp-5.1'
-      DEVICE_PATH:
-        description: 'Specify your Device Path' 
-        required: true
-        default: 'device/vit/VIT_T4310'
-      DEVICE_NAME:
-        description: 'Specify your Device Codename' 
-        required: true
-        default: 'VIT_T4310'
-      BUILD_TARGET:
-        description: 'Specify your Build Target' 
-        required: true
-        default: 'recovery'
-        type: choice
-        options:
-        - boot
-        - recovery
-        - vendorboot
-      LDCHECK:
-        description: 'Path of blobs to check' 
-        required: true
-        default: 'system/bin/qseecomd'
-      RECOVERY_TAR:
-        description: 'Release recovery.tar For Samsung devices'
-        required: false
-        default: false
-        type: boolean
-      RECOVERY_INSTALLER:
-        description: 'Include recovery installer zip'
-        type: boolean
-        required: true
-        default: true
 
 jobs:
   build:
-    name: Build TWRP for VIT_T4310 by ${{ github.actor }}
+    name: Build TWRP for VIT_T4310
     runs-on: ubuntu-20.04
-    if: github.event.repository.owner.id == github.event.sender.id
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    permissions:
-      contents: write
+
     steps:
     - name: Check Out
       uses: actions/checkout@v3
 
-    - name: Cleanup
-      uses: rokibhasansagar/slimhub_actions@main
-
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 24
-
-    - name: Prepare the environment
+    - name: Setup Build Environment
       run: |
         sudo apt update
-        sudo apt -y upgrade
-        sudo apt -y install tar zip wget gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libtinfo5 libgflags-dev
-        sudo add-apt-repository universe
-        sudo apt -y install libncurses5 python2
+        sudo apt install -y git-core gnupg flex bison gperf build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 x11proto-core-dev libx11-dev lib32ncurses5-dev lib32z1-dev ccache unzip libstdc++6 libncurses5 libtinfo5
+        sudo apt install -y python2 python-is-python2
         sudo ln -sf /usr/bin/python2 /usr/bin/python
-        mkdir -p ~/android_build/out
-        sudo chmod -R 777 ~/android_build
 
-    - name: Install OpenJDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: zulu
-        java-version: 8
+    - name: Install GCC 4.9
+      run: |
+        sudo apt install -y gcc-4.9 g++-4.9
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 100
 
-    - name: Install Git-Repo
+    - name: Install OpenJDK 7
+      run: |
+        sudo apt install -y openjdk-7-jdk
+        export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
+        echo "export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64" >> $GITHUB_ENV
+        echo "export PATH=$JAVA_HOME/bin:$PATH" >> $GITHUB_ENV
+
+    - name: Install Repo
       run: |
         mkdir ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
@@ -99,11 +45,9 @@ jobs:
       run: |
         mkdir -p ~/android_build/workspace
         cd ~/android_build/workspace
-        git config --global user.name "Samuel Kendall"
-        git config --global user.email "kinguser981@gmail.com"
-        repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b ${{ github.event.inputs.MANIFEST_BRANCH }}
+        repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-5.1
 
-    - name: Repo Sync
+    - name: Sync Repo
       run: |
         cd ~/android_build/workspace
         repo sync -j$(nproc --all) --force-sync
@@ -111,44 +55,23 @@ jobs:
     - name: Clone Device Tree
       run: |
         cd ~/android_build/workspace
-        git clone ${{ github.event.inputs.DEVICE_TREE }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
-        cd ${{ github.event.inputs.DEVICE_PATH }}
-        echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        git clone https://github.com/Eduzul123/twrp_device_vit_VIT_T4310 -b twrp-5.1 device/vit/VIT_T4310
 
-    - name: Check Build Makefile
+    - name: Setup Environment Variables
       run: |
-        cd ~/android_build/workspace
-        if [ -f ${{ github.event.inputs.DEVICE_PATH }}/twrp_${{ github.event.inputs.DEVICE_NAME}}.mk ]; then
-            echo "DEVICE_MAKEFILE=twrp_${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-        elif [ -f ${{ github.event.inputs.DEVICE_PATH }}/omni_${{ github.event.inputs.DEVICE_NAME}}.mk ]; then
-            echo "DEVICE_MAKEFILE=omni_${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-        else
-            echo "No recovery makefile file found!"
-        fi
-      continue-on-error: true
+        export ALLOW_MISSING_DEPENDENCIES=true
+        echo "export ALLOW_MISSING_DEPENDENCIES=true" >> $GITHUB_ENV
 
-    - name: Building Image
+    - name: Build Recovery
       run: |
         cd ~/android_build/workspace
         source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
-        export OUT_DIR=$(pwd)/out
-        lunch ${{ env.DEVICE_MAKEFILE }}-eng
+        lunch omni_VIT_T4310-eng
         make clean
-        make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-        echo "Done building your ${{ github.event.inputs.BUILD_TARGET }}.img"
+        make recoveryimage -j$(nproc --all)
 
-    - name: Set Build Date
-      run: |
-        echo "BUILD_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
-
-    - name: Check if Recovery Exists
-      run: |
-        cd ~/android_build/workspace
-        if [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img ]; then
-            echo "RECOVERY_TYPE=recovery" >> $GITHUB_ENV
-            echo "recovery.img file found!"
-            echo "MD5_IMG=$(md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
-        else
-            echo "No Recovery file found!"
-        fi
+    - name: Upload Recovery Image
+      uses: actions/upload-artifact@v3
+      with:
+        name: recovery-image
+        path: ~/android_build/workspace/out/target/product/VIT_T4310/recovery.img
