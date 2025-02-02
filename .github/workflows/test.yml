@@ -64,7 +64,7 @@ jobs:
         export USE_CCACHE=1
         export LC_ALL=C
         source build/envsetup.sh
-        lunch omni_$DEVICE_NAME-eng
+        lunch omni_$DEVICE_NAME.mk-eng
         make -j4 recoveryimage
 
     - name: Upload Artifact
