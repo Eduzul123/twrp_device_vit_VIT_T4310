@@ -3,10 +3,10 @@ name: TWRP Recovery Build for VIT T4310
 on:
   push:
     branches:
-      - main
+      - twrp-5.1
   pull_request:
     branches:
-      - main
+      - twrp-5.1
 
 jobs:
   build:
