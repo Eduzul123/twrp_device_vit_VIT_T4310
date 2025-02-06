@@ -17,6 +17,6 @@
 # Inherit from our custom product configuration
 $(call inherit-product, vendor/omni/config/common.mk)
 
-$(call inherit-product, device/alps/z6u030/full_VIT_T4310.mk)
+$(call inherit-product, device/vit/VIT_T4310/full_VIT_T4310.mk)
 
 PRODUCT_NAME := omni_VIT_T4310
