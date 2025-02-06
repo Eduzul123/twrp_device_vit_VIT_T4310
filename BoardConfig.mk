@@ -1,85 +1,84 @@
 #
-# Copyright (C) 2025 The Android Open Source Project
-# Copyright (C) 2025 SebaUbuntu's TWRP device tree generator
+# Copyright (C) 2016 The Android Open-Source Project
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-DEVICE_PATH := device/vit/VIT_T4310
+LOCAL_PATH := device/vit/VIT_T4310
 
-# For building with minimal manifest
-ALLOW_MISSING_DEPENDENCIES := true
-BUILD_BROKEN_DUP_RULES := true
-BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # Architecture
 TARGET_ARCH := arm
 TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
-TARGET_CPU_VARIANT := generic
-TARGET_CPU_VARIANT_RUNTIME := generic
+TARGET_CPU_SMP := true
+TARGET_CPU_VARIANT := cortex-a7
+ARCH_ARM_HAVE_NEON := true
+ARCH_ARM_HAVE_VFP := true
+ARCH_ARM_HAVE_TLS_REGISTER := true
 
-TARGET_USES_64_BIT_BINDER := true
+TARGET_LDPRELOAD := libxlog.so
 
-# APEX
-OVERRIDE_TARGET_FLATTEN_APEX := true
+BOARD_HAS_NO_SELECT_BUTTON := true
 
-# Bootloader
-TARGET_BOOTLOADER_BOARD_NAME := VIT T4310
-TARGET_NO_BOOTLOADER := true
-
-# Display
-TARGET_SCREEN_DENSITY := 160
+# BOOTLOADER
+TARGET_BOOTLOADER_BOARD_NAME := mt6580
 
 # Kernel
+BOARD_KERNEL_CMDLINE += \
+	bootopt=64S3,32S1,32S1 \
+	androidboot.selinux=permissive
 BOARD_KERNEL_BASE := 0x80000000
-BOARD_KERNEL_CMDLINE := bootopt=64S3,32S1,32S1
 BOARD_KERNEL_PAGESIZE := 2048
-BOARD_RAMDISK_OFFSET := 0x04000000
-BOARD_KERNEL_TAGS_OFFSET := 0x0e000000
-BOARD_MKBOOTIMG_ARGS += --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
-BOARD_KERNEL_IMAGE_NAME := Image
+BOARD_MKBOOTIMG_ARGS  := --kernel_offset 0x00008000 --ramdisk_offset 0x04000000 --tags_offset 0x0e000000 --board X510-D5110-L-20
+TARGET_PREBUILT_KERNEL := device/vit/VIT_T4310/prebuilt/kernel
 
-# Kernel - prebuilt
-TARGET_FORCE_PREBUILT_KERNEL := true
-ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
-TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
-endif
+# TARGET IMAGES
+TARGET_USERIMAGES_USE_EXT4 := true
 
-# Partitions
-BOARD_FLASH_BLOCK_SIZE := 131072 # (BOARD_KERNEL_PAGESIZE * 64)
+# RECOVERY
+TARGET_RECOVERY_FSTAB := device/vit/VIT_T4310/recovery/root/twrp.fstab
+
+# PARTTIONS
+# We need the partitions size in decimal
+# Use cat proc/partitions via adb, then block size * 1024
+# 'Tis typical for counterfeit/clone devices to come with a hacked framework
+# that is so coded to report a different ROM capacity than what's actually there.
+#
+# Apparently the userdata partition is set at ~5GB, and system at 1.3GB
+# Change these in case you want to port this to your clone or white-box phone.
 BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 16777216
-BOARD_HAS_LARGE_FILESYSTEM := true
-BOARD_SYSTEMIMAGE_PARTITION_TYPE := ext4
-BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
-BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-TARGET_COPY_OUT_VENDOR := vendor
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 1367343104
+BOARD_USERDATAIMAGE_PARTITION_SIZE := 5737283584
+# For the following line, do KERNEL_PAGE_SIZE * 64 (Most of time it is 2048 * 64)
+BOARD_FLASH_BLOCK_SIZE := 131072
 
-# Platform
-TARGET_BOARD_PLATFORM := mt6580
-
-# Recovery
-TARGET_USERIMAGES_USE_EXT4 := true
-TARGET_USERIMAGES_USE_F2FS := true
-
-# Security patch level
-VENDOR_SECURITY_PATCH := 2021-08-01
-
-# Hack: prevent anti rollback
-PLATFORM_SECURITY_PATCH := 2099-12-31
-VENDOR_SECURITY_PATCH := 2099-12-31
-PLATFORM_VERSION := 16.1.0
-
-# TWRP Configuration
+# TWRP stuff
 TW_THEME := portrait_hdpi
-TW_EXTRA_LANGUAGES := false
-TW_SCREEN_BLANK_ON_BOOT := true
-TW_INPUT_BLACKLIST := "hbtp_vm"
+RECOVERY_GRAPHICS_USE_LINELENGTH := true
+TW_NO_REBOOT_BOOTLOADER := true
+TW_BRIGHTNESS_PATH := /sys/devices/platform/leds-mt65xx/leds/lcd-backlight/brightness
+TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/devices/platform/mt_usb/musb-hdrc.0.auto/gadget/lun%d/file
+TW_MAX_BRIGHTNESS := 255
+TW_INCLUDE_FB2PNG := true
+TW_CUSTOM_CPU_TEMP_PATH := /sys/devices/virtual/thermal/thermal_zone1/temp
+TW_REBOOT_BOOTLOADER := true
+TW_REBOOT_RECOVERY := true
+TW_EXCLUDE_SUPERSU := false
 TW_USE_TOOLBOX := true
-TW_EXCLUDE_APEX := true
-TW_EXCLUDE_PYTHON := true
-TW_EXCLUDE_NANO := true
-TW_EXCLUDE_TWRPAPP := true
+
+# Device-specific stuff - the clone I am working on has a flipped framebuffer
+# This basically forced me to download BBQLinux and git these source files :P
+BOARD_HAS_FLIPPED_SCREEN := true

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 The Android Open-Source Project
+# Copyright (C) 2016 The Android Open-Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,12 @@
 # limitations under the License.
 #
 
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/omni_VIT_T4310.mk
+# Inherit from those products. Most specific first.
+$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+
+# Device identifier. This must come after all inclusions
+PRODUCT_DEVICE := VIT_T4310
+PRODUCT_NAME := full_VIT_T4310
+PRODUCT_BRAND := VIT T4310
+PRODUCT_MODEL := VIT T4310
+PRODUCT_MANUFACTURER := vit
