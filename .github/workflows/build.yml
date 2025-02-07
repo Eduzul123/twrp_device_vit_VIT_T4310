@@ -74,8 +74,10 @@ jobs:
         run: |
           cd ~/twrp
           source build/envsetup.sh
-          # Agregamos la bandera para que no se traten los warnings de truncation como errores.
+          # Agregamos la bandera para que tanto las compilaciones target como host no traten los warnings de truncation como errores.
           export TARGET_CFLAGS="$TARGET_CFLAGS -Wno-error=stringop-truncation"
+          export HOST_CFLAGS="$HOST_CFLAGS -Wno-error=stringop-truncation"
+          export COMMON_CFLAGS="$COMMON_CFLAGS -Wno-error=stringop-truncation"
           lunch omni_VIT_T4310-eng
           mka recoveryimage
 
