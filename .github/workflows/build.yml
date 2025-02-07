@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Run Cleanup to Free Space
@@ -20,9 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          # Instala Python 2 y Python 3, ccache, Java y demás herramientas necesarias.
           sudo apt install -y repo git-core curl wget python2 python3 python3-pip ccache openjdk-8-jdk
-          # Configura 'python' para que apunte a Python 2.
+          # Configura 'python' para que apunte a Python 2
           sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
           sudo update-alternatives --set python /usr/bin/python2
 
