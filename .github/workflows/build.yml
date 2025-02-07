@@ -1,0 +1,47 @@
+name: Build TWRP for VIT_T4310
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - twrp-5.1
+  pull_request:
+    branches:
+      - twrp-5.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y repo git-core curl wget python3
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Initialize and sync OmniROM source
+        run: |
+          mkdir ~/twrp && cd ~/twrp
+          repo init -u https://github.com/omnirom/android.git -b android-5.1
+          repo sync -j$(nproc) --force-sync
+
+      - name: Clone device tree
+        run: |
+          cd ~/twrp
+          git clone https://github.com/Eduzul123/twrp_device_vit_VIT_T4310.git device/vit/VIT_T4310
+
+      - name: Build TWRP
+        run: |
+          cd ~/twrp
+          source build/envsetup.sh
+          lunch omni_VIT_T4310-eng
+          mka recoveryimage
+
+      - name: Upload recovery image
+        uses: actions/upload-artifact@v3
+        with:
+          name: TWRP-Recovery
+          path: ~/twrp/out/target/product/VIT_T4310/recovery.img
