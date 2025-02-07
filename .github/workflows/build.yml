@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y repo git-core curl wget python3
+          sudo apt install -y repo git-core curl wget python3 ccache
 
       - name: Checkout source
         uses: actions/checkout@v4
