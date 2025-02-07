@@ -74,6 +74,8 @@ jobs:
         run: |
           cd ~/twrp
           source build/envsetup.sh
+          export TARGET_CFLAGS="$TARGET_CFLAGS -Wno-error"
+          export HOST_CFLAGS="$HOST_CFLAGS -Wno-error"
           lunch omni_VIT_T4310-eng
           mka recoveryimage DISABLE_WERROR=true
 
