@@ -41,7 +41,7 @@ BOARD_KERNEL_CMDLINE += \
 	androidboot.selinux=permissive
 BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_PAGESIZE := 2048
-BOARD_MKBOOTIMG_ARGS  := --kernel_offset 0x00008000 --ramdisk_offset 0x04000000 --tags_offset 0x0e000000 --board X510-D5110-L-20
+BOARD_MKBOOTIMG_ARGS  := --kernel_offset 0x00008000 --ramdisk_offset 0x04000000 --tags_offset 0x0e000000 --board 1520325298
 TARGET_PREBUILT_KERNEL := device/vit/VIT_T4310/prebuilt/kernel
 
 # TARGET IMAGES
