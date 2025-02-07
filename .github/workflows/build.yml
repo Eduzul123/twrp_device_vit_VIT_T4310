@@ -70,6 +70,11 @@ jobs:
           export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
           export PATH=$JAVA_HOME/bin:$PATH
 
+      - name: Patch check_seapp.c to fix strncat issue
+        run: |
+          sed -i 's/strncat(new_map->key, k->key, key_len);/snprintf(new_map->key, sizeof(new_map->key), "%s%s", k->key, k->value);/g' external/sepolicy/tools/check_seapp.c
+          sed -i 's/strncat(new_map->key, k->value, val_len);/ /g' external/sepolicy/tools/check_seapp.c
+
       - name: Build TWRP
         run: |
           cd ~/twrp
