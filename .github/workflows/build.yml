@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y repo git-core curl wget python3 ccache
+          sudo apt install -y repo git-core curl wget python3 python-is-python3 python3-pip ccache openjdk-8-jdk
 
       - name: Checkout source
         uses: actions/checkout@v4
@@ -40,10 +40,12 @@ jobs:
           mkdir -p ~/twrp/device/vit
           git clone --depth=1 https://github.com/Eduzul123/twrp_device_vit_VIT_T4310.git ~/twrp/device/vit/VIT_T4310
 
-      - name: Set up ccache
+      - name: Set up environment
         run: |
           export USE_CCACHE=1
           ccache -M 5G
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
 
       - name: Build TWRP
         run: |
